@@ -47,16 +47,28 @@ def handle_message(message, phone_number_id):
     from_number = message["from"]
     text_body = message.get("text", {}).get("body", "")
 
-    # Save message to Firestore
-    note_ref = db.collection("notes").add({
-        "user_id": from_number,
-        "content": text_body,
-        "created_at": datetime.datetime.utcnow().isoformat(),
-        "schedule": generate_schedule()
-    })
+    # Check if user is already registered
+    user_ref = db.collection("users").document(from_number)
+    user = user_ref.get()
 
-    # Send acknowledgment back to WhatsApp
-    send_whatsapp_message(from_number, phone_number_id, "Thanks for your message! I'll help you schedule revisions.")
+    if not user.exists:
+        # Register new user
+        user_ref.set({
+            "phone_number": from_number,
+            "created_at": datetime.datetime.utcnow().isoformat(),
+        })
+        send_whatsapp_message(from_number, phone_number_id, "Welcome! You have been registered. Send your notes, and I will help you schedule revisions.")
+    else:
+        # Save message to Firestore
+        note_ref = db.collection("notes").add({
+            "user_id": from_number,
+            "content": text_body,
+            "created_at": datetime.datetime.utcnow().isoformat(),
+            "schedule": generate_schedule()
+        })
+
+        # Send acknowledgment back to WhatsApp
+        send_whatsapp_message(from_number, phone_number_id, "Thanks for your message! I'll help you schedule revisions.")
 
 # Generate Revision Schedule
 def generate_schedule():
