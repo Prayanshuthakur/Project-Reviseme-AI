@@ -5,7 +5,8 @@ import requests
 import datetime
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate("path/to/your/serviceAccountKey.json")
+firebase_credentials = os.getenv("FIREBASE_CREDENTIALS")
+cred = credentials.Certificate(eval(firebase_credentials))
 firebase_admin.initialize_app(cred)
 
 db = firestore.client()
